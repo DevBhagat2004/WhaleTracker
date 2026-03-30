@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WHALESCOPE — Polymarket Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1217;
+    --bg3: #141820;
+    --border: rgba(255,165,0,0.15);
+    --border2: rgba(255,165,0,0.35);
+    --amber: #ffaa00;
+    --amber-dim: rgba(255,170,0,0.6);
+    --green: #00ff9d;
+    --green-dim: rgba(0,255,157,0.5);
+    --red: #ff4757;
+    --red-dim: rgba(255,71,87,0.5);
+    --text: #e8e0cc;
+    --text-dim: #7a7060;
+    --text-muted: #3a3530;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINE EFFECT */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--amber);
+    text-shadow: 0 0 20px rgba(255,170,0,0.3);
+  }
+
+  .logo span { color: var(--text-dim); font-size: 12px; font-family: var(--mono); letter-spacing: 2px; display: block; margin-top: -4px; }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* PAGES */
+  .page { display: none; min-height: calc(100vh - 53px); }
+  .page.active { display: flex; }
+
+  /* ═══════════════════════════════════════
+     PAGE 1 — LANDING
+  ═══════════════════════════════════════ */
+  #page-landing {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #page-landing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,170,0,0.04) 0%, transparent 70%),
+      repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(255,170,0,0.02) 80px, rgba(255,170,0,0.02) 81px),
+      repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(255,170,0,0.02) 80px, rgba(255,170,0,0.02) 81px);
+  }
+
+  .landing-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--amber-dim);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .landing-title {
+    font-family: var(--display);
+    font-size: clamp(64px, 10vw, 120px);
+    letter-spacing: 8px;
+    line-height: 0.9;
+    color: var(--amber);
+    text-shadow: 0 0 60px rgba(255,170,0,0.2);
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .landing-sub {
+    font-size: 15px;
+    color: var(--text-dim);
+    font-weight: 300;
+    letter-spacing: 1px;
+    margin-bottom: 60px;
+    max-width: 500px;
+  }
+
+  .btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+  }
+
+  .btn-card {
+    border: 1px solid var(--border2);
+    background: var(--bg2);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-card:hover { background: var(--bg3); border-color: var(--amber); }
+  .btn-card:hover::before { opacity: 1; }
+
+  .btn-card-num {
+    font-family: var(--display);
+    font-size: 48px;
+    color: var(--text-muted);
+    line-height: 1;
+    margin-bottom: 12px;
+    transition: color 0.2s;
+  }
+
+  .btn-card:hover .btn-card-num { color: var(--amber); }
+
+  .btn-card-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .btn-card-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .btn-card-arrow {
+    position: absolute;
+    bottom: 16px; right: 16px;
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .btn-card:hover .btn-card-arrow { color: var(--amber); transform: translate(2px, -2px); }
+
+  /* ═══════════════════════════════════════
+     PAGE 2 — WHALE TRACKER
+  ═══════════════════════════════════════ */
+  #page-tracker {
+    flex-direction: column;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .back-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    background: none;
+  }
+
+  .back-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+
+  .page-title {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--amber);
+  }
+
+  /* CONTROLS PANEL */
+  .controls-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .control-block {
+    padding: 14px 20px;
+    border-right: 1px solid var(--border);
+  }
+
+  .control-block:last-child { border-right: none; }
+
+  .control-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .control-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .control-input:focus { border-color: var(--amber-dim); }
+
+  .control-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .control-input-row .control-input { flex: 1; }
+
+  .slug-input-wrap {
+    display: flex;
+    gap: 0;
+  }
+
+  .slug-input-wrap .control-input { flex: 1; }
+
+  .run-btn {
+    background: var(--amber);
+    color: var(--bg);
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .run-btn:hover { background: #ffcc44; }
+  .run-btn:active { transform: scale(0.98); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .stat-cell {
+    padding: 10px 20px;
+    border-right: 1px solid var(--border);
+    flex: 1;
+  }
+
+  .stat-cell:last-child { border-right: none; }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--amber);
+    font-weight: 500;
+  }
+
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+
+  /* FEED */
+  .feed-wrap {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  .feed-header {
+    display: grid;
+    grid-template-columns: 80px 120px 80px 140px 1fr 80px 100px;
+    gap: 0;
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .feed-col {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .feed-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    gap: 12px;
+    color: var(--text-muted);
+  }
+
+  .feed-empty-icon {
+    font-family: var(--display);
+    font-size: 64px;
+    color: var(--text-muted);
+    letter-spacing: 4px;
+  }
+
+  .feed-empty p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .trade-row {
+    display: grid;
+    grid-template-columns: 80px 120px 80px 140px 1fr 80px 100px;
+    gap: 0;
+    padding: 9px 20px;
+    border-bottom: 1px solid rgba(255,170,0,0.05);
+    font-family: var(--mono);
+    font-size: 12px;
+    animation: rowIn 0.3s ease;
+    transition: background 0.15s;
+  }
+
+  .trade-row:hover { background: var(--bg2); }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .trade-row.mega { background: rgba(255,170,0,0.05); border-left: 2px solid var(--amber); }
+  .trade-row.large { border-left: 2px solid rgba(255,170,0,0.4); }
+
+  .trade-amount { color: var(--amber); font-weight: 500; }
+  .trade-amount.mega-amt { color: #ffdd66; text-shadow: 0 0 10px rgba(255,220,80,0.4); }
+  .trade-side-buy { color: var(--green); }
+  .trade-side-sell { color: var(--red); }
+  .trade-outcome { color: var(--text); }
+  .trade-name { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trade-market { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+  .trade-pos { color: var(--text-dim); }
+  .trade-time { color: var(--text-muted); font-size: 10px; }
+
+  /* ═══════════════════════════════════════
+     PAGE 3 — WALLET PROFILE
+  ═══════════════════════════════════════ */
+  #page-wallet {
+    flex-direction: column;
+  }
+
+  .wallet-content {
+    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .wallet-search-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 1px solid var(--border2);
+  }
+
+  .wallet-search-bar input {
+    flex: 1;
+    background: var(--bg2);
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 16px;
+    outline: none;
+  }
+
+  .wallet-search-bar input::placeholder { color: var(--text-muted); }
+
+  .wallet-search-bar button {
+    background: var(--amber);
+    color: var(--bg);
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .wallet-search-bar button:hover { background: #ffcc44; }
+
+  .wallet-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+  }
+
+  .wallet-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .wallet-card-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wallet-address {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber-dim);
+    word-break: break-all;
+    margin-bottom: 20px;
+  }
+
+  .wallet-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,170,0,0.05);
+  }
+
+  .wallet-stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .wallet-stat-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--amber);
+  }
+
+  .wallet-stat-val.pos { color: var(--green); }
+  .wallet-stat-val.neg { color: var(--red); }
+
+  .positions-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .position-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .pos-title {
+    font-size: 12px;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pos-outcome {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .pos-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--amber);
+    text-align: right;
+  }
+
+  .pos-pnl {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: right;
+  }
+
+  .pos-pnl.pos { color: var(--green); }
+  .pos-pnl.neg { color: var(--red); }
+
+  .wallet-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-muted);
+    gap: 12px;
+  }
+
+  .wallet-placeholder p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  /* LOADING */
+  .loading-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    background-size: 200% 100%;
+    animation: loading 1.2s linear infinite;
+  }
+
+  @keyframes loading {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ═══════════════════════════════════════
+     PAGE 4 — CORRELATION MAP
+  ═══════════════════════════════════════ */
+  .corr-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .corr-input-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .corr-input-row {
+    display: flex;
+    gap: 0;
+  }
+
+  .corr-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    padding: 5px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber-dim);
+  }
+
+  .corr-tag-x {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .corr-tag-x:hover { color: var(--red); }
+
+  .corr-stats-row {
+    display: flex;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .corr-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .corr-row {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--border2);
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 20px;
+    align-items: center;
+    transition: background 0.15s;
+  }
+
+  .corr-row:hover { background: var(--bg3); }
+
+  .corr-row-full {
+    border-left: 2px solid var(--amber);
+    background: rgba(255,170,0,0.03);
+  }
+
+  .corr-row-title {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .corr-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .corr-outcome {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    letter-spacing: 1px;
+  }
+
+  .outcome-no  { background: rgba(255,71,87,0.15);  color: var(--red);   }
+  .outcome-yes { background: rgba(0,255,157,0.1);   color: var(--green); }
+
+  .corr-price {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .corr-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber-dim);
+  }
+
+  .corr-row-right { text-align: right; }
+
+  .corr-match-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .corr-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    margin-bottom: 8px;
+    border-radius: 2px;
+  }
+
+  .corr-bar-fill {
+    height: 100%;
+    background: var(--amber);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .corr-wallets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  .corr-w {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 2px 5px;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    WHALESCOPE
+    <span>POLYMARKET INTELLIGENCE TERMINAL</span>
+  </div>
+  <div class="topbar-right">
+    <span><span class="live-dot"></span>LIVE</span>
+    <span id="clock">--:--:--</span>
+    <span>POLYGON MAINNET</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 1: LANDING ═══════════════════ -->
+<div class="page active" id="page-landing">
+  <div class="landing-tag">Polymarket Intelligence Terminal v1.0</div>
+  <div class="landing-title">WHALESCOPE</div>
+  <div class="landing-sub">Track large capital flows across prediction markets. Identify smart money before the crowd.</div>
+
+  <div class="btn-grid" style="grid-template-columns:1fr 1fr 1fr;max-width:900px;">
+    <div class="btn-card" onclick="showPage('tracker')">
+      <div class="btn-card-num">01</div>
+      <div class="btn-card-title">Whale Feed</div>
+      <div class="btn-card-desc">Live large trade detection across top markets. Filter by size, market, and wallet behavior.</div>
+      <div class="btn-card-arrow">↗</div>
+    </div>
+    <div class="btn-card" onclick="showPage('wallet')">
+      <div class="btn-card-num">02</div>
+      <div class="btn-card-title">Wallet Profiler</div>
+      <div class="btn-card-desc">Deep dive into any wallet. Open positions, P&L, market exposure, and trade history.</div>
+      <div class="btn-card-arrow">↗</div>
+    </div>
+    <div class="btn-card" onclick="showPage('correlation')">
+      <div class="btn-card-num">03</div>
+      <div class="btn-card-title">Correlation Map</div>
+      <div class="btn-card-desc">Compare multiple whale wallets. Find shared positions and coordinated market moves.</div>
+      <div class="btn-card-arrow">↗</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 2: WHALE TRACKER ═══════════════════ -->
+<div class="page" id="page-tracker" style="flex-direction:column;">
+
+  <div class="page-header">
+    <button class="back-btn" onclick="showPage('landing')">← BACK</button>
+    <div class="page-title">WHALE FEED</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-panel">
+    <div class="control-block">
+      <div class="control-label">Market Slug <span style="color:var(--red);font-size:10px;">REQUIRED</span></div>
+      <div class="slug-input-wrap">
+        <input class="control-input" id="slug-input" placeholder="e.g. us-x-iran-ceasefire-by-march-31" />
+      </div>
+    </div>
+    <div class="control-block">
+      <div class="control-label">Min Buy Amount (USDC)</div>
+      <input class="control-input" id="min-amount" type="number" value="10000" placeholder="10000" />
+    </div>
+    <div class="control-block">
+      <div class="control-label">Max Open Positions</div>
+      <input class="control-input" id="max-positions" type="number" value="21" placeholder="21" />
+    </div>
+    <div class="control-block">
+      <div class="control-label">Trade Limit</div>
+      <div class="control-input-row">
+        <input class="control-input" id="trade-limit" type="number" value="100" placeholder="100" />
+        <button class="run-btn" onclick="startFeed()">RUN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING BAR -->
+  <div class="loading-bar hidden" id="loading-bar"></div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="stat-label">Total Detected</div>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Largest Trade</div>
+      <div class="stat-value" id="stat-largest">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">NO Volume</div>
+      <div class="stat-value red" id="stat-no-vol">$0</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">YES Volume</div>
+      <div class="stat-value green" id="stat-yes-vol">$0</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Market</div>
+      <div class="stat-value" id="stat-market" style="font-size:11px;color:var(--amber-dim);">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Last Update</div>
+      <div class="stat-value" id="stat-updated" style="font-size:12px;">—</div>
+    </div>
+  </div>
+
+  <!-- FEED HEADER -->
+  <div class="feed-header">
+    <div class="feed-col">Amount</div>
+    <div class="feed-col">Wallet</div>
+    <div class="feed-col">Side</div>
+    <div class="feed-col">Outcome</div>
+    <div class="feed-col">Market</div>
+    <div class="feed-col">Positions</div>
+    <div class="feed-col">Time</div>
+  </div>
+
+  <!-- FEED BODY -->
+  <div class="feed-wrap" id="feed-body">
+    <div class="feed-empty" id="feed-empty">
+      <div class="feed-empty-icon">WHALESCOPE</div>
+      <p>Configure filters above and press RUN</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ PAGE 3: WALLET PROFILER ═══════════════════ -->
+<div class="page" id="page-wallet" style="flex-direction:column;">
+
+  <div class="page-header">
+    <button class="back-btn" onclick="showPage('landing')">← BACK</button>
+    <div class="page-title">WALLET PROFILER</div>
+  </div>
+
+  <div class="wallet-content">
+    <div class="wallet-search-bar">
+      <input id="wallet-input" placeholder="Enter wallet address  e.g. 0x35bbbad2415fe5e39b12da9a316cdc80b022009b" />
+      <button onclick="loadWallet()">ANALYZE</button>
+    </div>
+
+    <div id="wallet-placeholder" class="wallet-placeholder">
+      <div style="font-family:var(--display);font-size:48px;color:var(--text-muted);letter-spacing:4px;">WALLET</div>
+      <p>Enter a wallet address to begin profiling</p>
+    </div>
+
+    <div id="wallet-data" class="hidden">
+      <div class="wallet-grid">
+        <!-- LEFT: SUMMARY -->
+        <div>
+          <div class="wallet-card" style="margin-bottom:12px;">
+            <div class="wallet-card-title">Identity</div>
+            <div class="wallet-address" id="w-address">—</div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Open Positions</span>
+              <span class="wallet-stat-val" id="w-positions">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Total Deployed</span>
+              <span class="wallet-stat-val" id="w-deployed">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Current Value</span>
+              <span class="wallet-stat-val" id="w-value">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Unrealized P&L</span>
+              <span class="wallet-stat-val" id="w-pnl">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Biggest Position</span>
+              <span class="wallet-stat-val" id="w-biggest">—</span>
+            </div>
+          </div>
+
+          <div class="wallet-card">
+            <div class="wallet-card-title">Bias</div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">NO Exposure</span>
+              <span class="wallet-stat-val red" id="w-no-exp">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">YES Exposure</span>
+              <span class="wallet-stat-val pos" id="w-yes-exp">—</span>
+            </div>
+            <div class="wallet-stat">
+              <span class="wallet-stat-label">Dominant Side</span>
+              <span class="wallet-stat-val" id="w-dominant">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: POSITIONS -->
+        <div>
+          <div class="wallet-card-title" style="padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:12px;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;">
+            Open Positions
+          </div>
+          <div class="positions-list" id="positions-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 4: CORRELATION ═══════════════════ -->
+<div class="page" id="page-correlation" style="flex-direction:column;">
+
+  <div class="page-header">
+    <button class="back-btn" onclick="showPage('landing')">← BACK</button>
+    <div class="page-title">CORRELATION MAP</div>
+  </div>
+
+  <div class="corr-content">
+
+    <!-- WALLET INPUT -->
+    <div class="corr-input-section">
+      <div class="control-label" style="margin-bottom:8px;">Add Whale Wallets to Compare (min 2)</div>
+      <div class="corr-input-row">
+        <input class="control-input" id="corr-wallet-input" placeholder="Paste proxy wallet address and press Enter..." style="flex:1;" />
+        <button class="run-btn" onclick="addCorrWallet()">ADD</button>
+        <button class="run-btn" id="corr-run-btn" onclick="runCorrelation()" disabled style="background:var(--green);color:var(--bg);">ANALYZE</button>
+      </div>
+      <div id="corr-wallet-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="corr-loading" class="hidden" style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--amber-dim);">
+      ANALYZING POSITIONS...
+      <div class="loading-bar" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="corr-stats" class="hidden corr-stats-row">
+      <div class="stat-cell">
+        <div class="stat-label">Wallets Compared</div>
+        <div class="stat-value" id="corr-stat-wallets">0</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Shared Positions</div>
+        <div class="stat-value" id="corr-stat-shared">0</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Top Overlap</div>
+        <div class="stat-value" id="corr-stat-top">—</div>
+      </div>
+    </div>
+
+    <!-- EMPTY -->
+    <div id="corr-empty" class="hidden feed-empty">
+      <div class="feed-empty-icon">CORR</div>
+      <p>Add wallets above and press ANALYZE</p>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="corr-results" class="corr-results"></div>
+
+  </div>
+</div>
+
+<script>
+const BACKEND = 'http://localhost:8000';
+
+let seen = new Set();
+let feedInterval = null;
+let statsData = { total: 0, largest: 0, noVol: 0, yesVol: 0 };
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+}
+
+function clock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toTimeString().slice(0,8) + ' CT';
+}
+setInterval(clock, 1000); clock();
+
+function formatUSD(n) {
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'K';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function formatTime(ts) {
+  return new Date(parseInt(ts) * 1000).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+}
+
+// ── WHALE FEED ──────────────────────────────────
+
+async function startFeed() {
+  if (feedInterval) clearInterval(feedInterval);
+  seen = new Set();
+  statsData = { total: 0, largest: 0, noVol: 0, yesVol: 0 };
+  document.getElementById('feed-empty').classList.add('hidden');
+  document.getElementById('feed-body').innerHTML = '';
+  updateStats();
+  await fetchFeed();
+  feedInterval = setInterval(fetchFeed, 60000);
+}
+
+async function fetchFeed() {
+  const slug       = document.getElementById('slug-input').value.trim();
+  const minAmount  = parseInt(document.getElementById('min-amount').value) || 10000;
+  const maxPos     = parseInt(document.getElementById('max-positions').value) || 21;
+  const tradeLimit = parseInt(document.getElementById('trade-limit').value) || 100;
+
+  if (!slug) {
+    alert('Market slug is required. Paste a Polymarket market slug to begin.');
+    return;
+  }
+
+  document.getElementById('loading-bar').classList.remove('hidden');
+
+  try {
+    const params = new URLSearchParams({
+      slug:        slug,
+      min_amount:  minAmount,
+      max_pos:     maxPos,
+      trade_limit: tradeLimit,
+    });
+
+    const r = await fetch(`${BACKEND}/api/trades?${params}`);
+    const trades = await r.json();
+
+    document.getElementById('stat-market').textContent = slug.slice(0, 25) + (slug.length > 25 ? '...' : '');
+
+    for (const t of trades) {
+      if (seen.has(t.transactionHash)) continue;
+      seen.add(t.transactionHash);
+
+      const total = t.size * t.price;
+      statsData.total++;
+      if (total > statsData.largest) statsData.largest = total;
+      if ((t.outcome || '').toLowerCase() === 'no') statsData.noVol += total;
+      else statsData.yesVol += total;
+
+      renderTradeRow(t, total, t.positionCount || 0);
+    }
+
+    updateStats();
+    document.getElementById('stat-updated').textContent =
+      new Date().toLocaleTimeString('en-US', {hour12:false});
+
+  } catch(e) {
+    console.error('Feed error:', e);
+  }
+
+  document.getElementById('loading-bar').classList.add('hidden');
+}
+
+function renderTradeRow(t, total, posCount) {
+  const feed = document.getElementById('feed-body');
+  const row = document.createElement('div');
+
+  let cls = 'trade-row';
+  let amtCls = 'trade-amount';
+  if (total >= 50000) { cls += ' mega'; amtCls += ' mega-amt'; }
+  else if (total >= 20000) cls += ' large';
+
+  const outcome = t.outcome || '—';
+  const side = t.side || '—';
+  const sideCls = side === 'BUY' ? 'trade-side-buy' : 'trade-side-sell';
+  const wallet = t.proxyWallet ? t.proxyWallet.slice(0,6) + '...' + t.proxyWallet.slice(-4) : '—';
+  const name = t.name || wallet;
+  const slug = (t.marketSlug || '').slice(0, 30);
+
+  row.className = cls;
+  row.innerHTML = `
+    <div class="${amtCls}">${formatUSD(total)}</div>
+    <div class="trade-name" title="${t.proxyWallet}">${name}</div>
+    <div class="${sideCls}">${side}</div>
+    <div class="trade-outcome">${outcome}</div>
+    <div class="trade-market" title="${t.marketSlug}">${slug}</div>
+    <div class="trade-pos">${posCount}</div>
+    <div class="trade-time">${formatTime(t.timestamp)}</div>
+  `;
+
+  row.addEventListener('click', () => {
+    document.getElementById('wallet-input').value = t.proxyWallet;
+    showPage('wallet');
+    loadWallet();
+  });
+
+  feed.insertBefore(row, feed.firstChild);
+
+  // keep max 200 rows
+  while (feed.children.length > 200) feed.removeChild(feed.lastChild);
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = statsData.total;
+  document.getElementById('stat-largest').textContent = statsData.largest ? formatUSD(statsData.largest) : '—';
+  document.getElementById('stat-no-vol').textContent = formatUSD(statsData.noVol);
+  document.getElementById('stat-yes-vol').textContent = formatUSD(statsData.yesVol);
+}
+
+// ── WALLET PROFILER ──────────────────────────────────
+
+async function loadWallet() {
+  const wallet = document.getElementById('wallet-input').value.trim();
+  if (!wallet) return;
+
+  document.getElementById('wallet-placeholder').classList.add('hidden');
+  document.getElementById('wallet-data').classList.add('hidden');
+
+  try {
+    const r = await fetch(`${BACKEND}/api/positions?wallet=${wallet}`);
+    const positions = await r.json();
+
+    if (!positions.length) {
+      document.getElementById('wallet-placeholder').classList.remove('hidden');
+      document.getElementById('wallet-placeholder').querySelector('p').textContent = 'No positions found for this wallet';
+      return;
+    }
+
+    let totalDeployed = 0, totalValue = 0, totalPnl = 0;
+    let noExp = 0, yesExp = 0, biggest = 0, biggestTitle = '';
+
+    positions.forEach(p => {
+      totalDeployed += p.totalBought || 0;
+      totalValue += p.currentValue || 0;
+      totalPnl += p.cashPnl || 0;
+      if (p.outcome === 'No') noExp += p.currentValue || 0;
+      else yesExp += p.currentValue || 0;
+      if ((p.currentValue || 0) > biggest) {
+        biggest = p.currentValue;
+        biggestTitle = (p.title || '').slice(0, 30);
+      }
+    });
+
+    document.getElementById('w-address').textContent = wallet.slice(0,10) + '...' + wallet.slice(-8);
+    document.getElementById('w-positions').textContent = positions.length;
+    document.getElementById('w-deployed').textContent = formatUSD(totalDeployed);
+    document.getElementById('w-value').textContent = formatUSD(totalValue);
+
+    const pnlEl = document.getElementById('w-pnl');
+    pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + formatUSD(totalPnl);
+    pnlEl.className = 'wallet-stat-val ' + (totalPnl >= 0 ? 'pos' : 'neg');
+
+    document.getElementById('w-biggest').textContent = biggestTitle || '—';
+    document.getElementById('w-no-exp').textContent = formatUSD(noExp);
+    document.getElementById('w-yes-exp').textContent = formatUSD(yesExp);
+    document.getElementById('w-dominant').textContent = noExp > yesExp ? 'NO BIAS' : 'YES BIAS';
+
+    // render positions
+    const list = document.getElementById('positions-list');
+    list.innerHTML = '';
+
+    const sorted = [...positions].sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
+    sorted.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'position-item';
+      const pnl = p.cashPnl || 0;
+      const pnlPct = p.percentPnl || 0;
+      item.innerHTML = `
+        <div>
+          <div class="pos-title" title="${p.title}">${(p.title || '').slice(0, 45)}</div>
+          <div class="pos-outcome">${p.outcome || '—'} · ${((p.curPrice || 0) * 100).toFixed(1)}¢</div>
+        </div>
+        <div class="pos-value">${formatUSD(p.currentValue || 0)}</div>
+        <div class="pos-pnl ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : ''}${formatUSD(pnl)}<br><span style="font-size:9px;">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%</span></div>
+      `;
+      list.appendChild(item);
+    });
+
+    document.getElementById('wallet-data').classList.remove('hidden');
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// Enter key on wallet input
+document.getElementById('wallet-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadWallet();
+});
+
+// ── CORRELATION MAP ──────────────────────────────────
+
+let corrWallets = [];
+
+function addCorrWallet() {
+  const input = document.getElementById('corr-wallet-input');
+  const val   = input.value.trim();
+  if (!val || corrWallets.includes(val)) { input.value = ''; return; }
+  corrWallets.push(val);
+  input.value = '';
+  renderCorrWalletTags();
+}
+
+function removeCorrWallet(w) {
+  corrWallets = corrWallets.filter(x => x !== w);
+  renderCorrWalletTags();
+}
+
+function renderCorrWalletTags() {
+  const wrap = document.getElementById('corr-wallet-tags');
+  wrap.innerHTML = '';
+  corrWallets.forEach(w => {
+    const tag = document.createElement('div');
+    tag.className = 'corr-tag';
+    tag.innerHTML = `<span>${w.slice(0,8)}...${w.slice(-6)}</span><span class="corr-tag-x" onclick="removeCorrWallet('${w}')">×</span>`;
+    wrap.appendChild(tag);
+  });
+  document.getElementById('corr-run-btn').disabled = corrWallets.length < 2;
+}
+
+async function runCorrelation() {
+  if (corrWallets.length < 2) return;
+  const resultsEl = document.getElementById('corr-results');
+  const emptyEl   = document.getElementById('corr-empty');
+  resultsEl.innerHTML = '';
+  emptyEl.classList.add('hidden');
+
+  document.getElementById('corr-loading').classList.remove('hidden');
+
+  try {
+    const r    = await fetch(`${BACKEND}/api/compare?wallets=${corrWallets.join(',')}`);
+    const data = await r.json();
+
+    document.getElementById('corr-loading').classList.add('hidden');
+
+    if (!data.length) {
+      emptyEl.classList.remove('hidden');
+      emptyEl.querySelector('p').textContent = 'No shared positions found';
+      return;
+    }
+
+    // summary stats
+    const shared   = data.filter(d => d.count >= 2).length;
+    const topMatch = data[0];
+    document.getElementById('corr-stat-shared').textContent  = shared;
+    document.getElementById('corr-stat-wallets').textContent = corrWallets.length;
+    document.getElementById('corr-stat-top').textContent     = topMatch ? `${topMatch.count}/${corrWallets.length}` : '—';
+    document.getElementById('corr-stats').classList.remove('hidden');
+
+    data.forEach(item => {
+      const row   = document.createElement('div');
+      const pct   = Math.round((item.count / corrWallets.length) * 100);
+      const isFull = item.count === corrWallets.length;
+      row.className = 'corr-row' + (isFull ? ' corr-row-full' : '');
+
+      row.innerHTML = `
+        <div class="corr-row-main">
+          <div class="corr-row-title" title="${item.title}">${(item.title || '').slice(0, 55)}</div>
+          <div class="corr-row-meta">
+            <span class="corr-outcome ${item.outcome === 'No' ? 'outcome-no' : 'outcome-yes'}">${item.outcome}</span>
+            <span class="corr-price">${((item.curPrice || 0) * 100).toFixed(1)}¢</span>
+            <span class="corr-val">${formatUSD(item.totalValue)}</span>
+          </div>
+        </div>
+        <div class="corr-row-right">
+          <div class="corr-match-label">${item.count} of ${corrWallets.length} wallets</div>
+          <div class="corr-bar-wrap">
+            <div class="corr-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="corr-wallets">${item.wallets.map(w => `<span class="corr-w">${w.slice(0,6)}…${w.slice(-4)}</span>`).join('')}</div>
+        </div>
+      `;
+      resultsEl.appendChild(row);
+    });
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('corr-loading').classList.add('hidden');
+  }
+}
+
+document.getElementById('corr-wallet-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addCorrWallet();
+});
+</script>
+</body>
+</html>
